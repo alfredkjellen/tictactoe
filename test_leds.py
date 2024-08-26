@@ -2,50 +2,64 @@ import RPi.GPIO as GPIO
 import threading
 import time
 
-GPIO.setmode(GPIO.BCM)
+GPIO.setmode(GPIO.BCM) 
 GPIO.setwarnings(False)
 
-pins = [2, 3, 4, 7, 6, 5, 8, 9, 10]
-for pin in pins:
+start_button_pin = 20
+stop_button_pin = 21
+led_pins = [2, 3, 4, 7, 6, 5, 8, 9, 10]
+
+GPIO.setup(start_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(stop_button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+
+for pin in led_pins:
     GPIO.setup(pin, GPIO.OUT)
     GPIO.output(pin, GPIO.LOW)
 
-board = ["", "", "", "", "", "", "", "", ""]
 
+animation_running = False
+stop_animation = threading.Event()
 
-def show_X(position):
-    GPIO.output(pins[position], GPIO.HIGH)
-
-def show_O(position):
-    while board[position] == "O":
-        GPIO.output(pins[position], GPIO.HIGH)
+def start_animation():
+    global animation_running
+    while True:
+        if stop_animation.is_set():
+            break
+        for pin in led_pins:
+            if stop_animation.is_set():
+                break
+            GPIO.output(pin, GPIO.HIGH)
+            time.sleep(0.5)
+            GPIO.output(pin, GPIO.LOW)
         time.sleep(0.5)
-        GPIO.output(pins[position], GPIO.LOW)
-        time.sleep(0.5)
+    animation_running = False
 
-def update_board():
-    threads = []
-    for i, state in enumerate(board):
-        if state == "X":
-            show_X(i)
-        elif state == "O":
-            thread = threading.Thread(target=show_O, args=(i,))
-            thread.start()
-            threads.append(thread)
-        else:
-            GPIO.output(pins[i], GPIO.LOW)
+def monitor_start_button():
+    global animation_running
+    while True:
+        if GPIO.input(start_button_pin) == GPIO.LOW: 
+            if not animation_running:
+                animation_running = True
+                stop_animation.clear()
+                threading.Thread(target=start_animation).start()
+            time.sleep(0.2)  
 
-    for thread in threads:
-        thread.join()
-
-
-board = ["X", "O", "", "X", "", "O", "", "", "X"]
-update_board()
+def monitor_stop_button():
+    global animation_running
+    while True:
+        if GPIO.input(stop_button_pin) == GPIO.LOW: 
+            if animation_running:
+                stop_animation.set()
+            time.sleep(0.2)
 
 try:
+    
+    threading.Thread(target=monitor_start_button).start()
+    threading.Thread(target=monitor_stop_button).start()
+
+
     while True:
         time.sleep(1)
+
 except KeyboardInterrupt:
-    pass
-finally:
     GPIO.cleanup()
