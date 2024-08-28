@@ -1,0 +1,1 @@
+antal_spelare = 11
