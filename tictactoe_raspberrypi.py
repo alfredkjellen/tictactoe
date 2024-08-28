@@ -53,8 +53,10 @@ class Game():
                 for button in self.button_pins:
                     if GPIO.input(button) == GPIO.HIGH:
                         self.current_button = button
-                        while button == GPIO.HIGH:
-                            pass
+                        
+                        while GPIO.input(button) == GPIO.HIGH:
+                            sleep(0.1)
+            sleep(0.1)
 
 
     def handle_game(self):
@@ -93,24 +95,24 @@ class Game():
             self.turn_off(self.led_pins[i])
             sleep(0.2)
 
-
     def play_pvp(self):
         while True:
+            while self.current_button is None:
+                sleep(0.1)
 
-            while True:
-                move = self.current_button
-                self.current_button = None
-                if self.board[move] == "":
+            move = self.current_button
+            self.current_button = None
+
+            if self.board[move] == "":
+                self.board[move] = self.current_player
+                self.update_board()
+
+                if result := self.check_win_or_draw() is not False:
+                    self.end_game(result)
                     break
-            
-            self.board[move] = self.current_player
-            self.update_board()
 
-            if result:= self.check_win_or_draw() is not False:
-                self.end_game(result)
-                break
+                self.current_player = 'O' if self.current_player == 'X' else 'X'
 
-            self.current_player = 'O' if self.current_button == 'X' else 'X'
 
             
 
