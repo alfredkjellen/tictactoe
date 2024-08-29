@@ -1,1 +1,1 @@
-antal_spelare = 11
+antal_spelare = 0

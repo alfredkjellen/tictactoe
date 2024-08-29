@@ -1,31 +1,28 @@
 import RPi.GPIO as GPIO
 import threading
 from time import sleep
-
-#for testing
-import keyboard
+from LED_management import start_animation, tie_animation, win_animation
+import json
+import random
 
 
 class Game():
-    button_pins = [27, 21, 20]
+    button_pins = [20, 21, 27, 26,12,19]
     led_pins = [2, 3, 4, 7, 6, 5, 8, 9, 10]
     pvp_button = button_pins[0]
     pvc_button = button_pins[1]
-    current_button = None
-
     board = ["", "", "", "", "", "", "", "", ""]
     current_player = 'X'
 
-    threads = []
 
     def __init__(self):
-        GPIO.setmode(GPIO.BCM) 
+        GPIO.setmode(GPIO.BCM)
         GPIO.setwarnings(False)
         for pin in self.button_pins:
             GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
         for pin in self.led_pins:
             GPIO.setup(pin, GPIO.OUT)
-        
+       
     def reset(self):
         for pin in self.led_pins:
             GPIO.output(pin, GPIO.LOW)
@@ -33,58 +30,42 @@ class Game():
 
     def run(self):
         self.reset()
-        thread1 = threading.Thread(target=self.check_buttons,args=(True,)).start()
-        thread2 = threading.Thread(target=self.handle_game).start()
-        self.threads.append(thread1)
-        self.threads.append(thread2)
-        
-    def check_buttons(self, test_with_terminal=False):
-        buttons = [1,2,3,4,5,6,7,8,9]
-        while True:
-            if test_with_terminal:
-                
-                for button in buttons:
-                    if keyboard.is_pressed(button):
-                        self.current_button = self.button_pins[button-1]
-                        print(f"Button {button} pressed.")
-                        while keyboard.is_pressed(button):
-                            pass
-            else:
-                for button in self.button_pins:
-                    if GPIO.input(button) == GPIO.HIGH:
-                        self.current_button = button
-                        while button == GPIO.HIGH:
-                            pass
+        self.update_board()
+       
+        start_animation()
 
-
-    def handle_game(self):
+        self.add_player_count()
         while True:
-            if self.current_button == self.pvp_button:
-                self.current_button = None
+            if GPIO.input(self.pvp_button) == GPIO.HIGH:
                 self.play_pvp()
                 break
-
-            elif self.current_button == self.pvc_button:
-                self.current_button = None
+            elif GPIO.input(self.pvc_button) == GPIO.HIGH:
                 self.play_pvc()
                 break
+           
+            sleep(0.1)
+       
+       
 
     def update_board(self):
+
         for i, symbol in enumerate(self.board):
             if symbol == 'X':
-                self.turn_on(i)
+                self.turn_on(self.led_pins[i])
             elif symbol == 'O':
                 thread = threading.Thread(target=self.show_O, args=(i,))
                 thread.start()
-                self.threads.append(thread)
+                #self.threads.append(thread)
             else:
-                self.turn_off(i)               
-        
-    def turn_off(led_pin):
-        GPIO.output(led_pin, GPIO.LOW)
-        
-    def turn_on(led_pin):
-        GPIO.output(led_pin, GPIO.HIGH)
+                self.turn_off(self.led_pins[i])
+
+                   
+           
+    def turn_off(self, i):
+        GPIO.output(i, GPIO.LOW)
+       
+    def turn_on(self, i):
+        GPIO.output(i, GPIO.HIGH)
 
     def show_O(self, i):
         while self.board[i] == "O":
@@ -93,75 +74,149 @@ class Game():
             self.turn_off(self.led_pins[i])
             sleep(0.2)
 
-
     def play_pvp(self):
+        print('PVP')
+        sleep(1)
         while True:
-
-            while True:
-                move = self.current_button
-                self.current_button = None
-                if self.board[move] == "":
-                    break
-            
-            self.board[move] = self.current_player
+            valid_move = False
+            while not valid_move:
+                for i, button in enumerate(self.button_pins):
+                    if GPIO.input(button) == GPIO.HIGH and self.board[i] == "":
+                        self.board[i] = self.current_player
+                        valid_move = True
+                        break
+                   
+           
             self.update_board()
-
-            if result:= self.check_win_or_draw() is not False:
+            if (result:= self.check_win_or_draw()) != False:
                 self.end_game(result)
                 break
 
-            self.current_player = 'O' if self.current_button == 'X' else 'X'
-
-            
+            self.current_player = 'O' if self.current_player == 'X' else 'X'
+           
 
     def check_win_or_draw(self):
-        win_combinations = [[0, 1, 2], [3, 4, 5], [6, 7, 8], 
+        win_combinations = [[0, 1, 2], [3, 4, 5], [6, 7, 8],
             [0, 3, 6], [1, 4, 7], [2, 5, 8],  
             [0, 4, 8], [2, 4, 6]]  
-        
+       
         for comb in win_combinations:
             if self.board[comb[0]] == self.board[comb[1]] == self.board[comb[2]] != "":
                 return self.board[comb[0]], comb
-        
-        if all(self.board) != "":
+                   
+        if all(tile != "" for tile in self.board):
             return 'Draw'
 
         return False
 
-                
+               
     def end_game(self, result):
         if result == 'Draw':
             print('Draw')
+            #tie_animation
+           
         else:
-            player_won, comb = result
+            player_won, comb = result[0], result[1]
             self.board = ["", "", "", "", "", "", "", "", ""]
             for i in comb:
                 self.board[i] = player_won
             self.update_board()
-        
-        sleep(3)
-
-        for thread in self.threads:
-            thread.join()
+            print('Player', player_won, 'won')
+           
+       
+            sleep(3)
+       
+            #win_animation()
 
         self.run()
 
 
 
-    def play_pvc():
-        pass
+    def play_pvc(self):
+        sleep(1)
+       
+        player_turn = random.choice([True, False])
+        while True:
+            valid_move = False
+           
+            if player_turn:
+                while not valid_move:
+                    for i, button in enumerate(self.button_pins):
+                        if GPIO.input(button) == GPIO.HIGH and self.board[i] == "":
+                            self.board[i] = self.current_player
+                            valid_move = True
+                            break
+                       
+            else:
+                self.bot_move()
+               
+            self.update_board()
+            if (result:= self.check_win_or_draw()) != False:
+                self.end_game(result)
+                break
+           
+            player_turn = not player_turn
+            self.current_player = 'O' if self.current_player == 'X' else 'X'
+       
+       
+
+    def bot_move(self):
+
+        for i in range(9):
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                if self.check_win_or_draw():
+                    return
+                self.board[i] = ""
+
+        opponent = 'O' if self.current_player == 'X' else 'X'
+        for i in range(9):
+            if self.board[i] == "":
+                self.board[i] = opponent
+                if self.check_win_or_draw():
+                    self.board[i] = self.current_player
+                    return
+                self.board[i] = ""
+
+        if self.board[4] == "":
+            self.board[4] = self.current_player
+            return
+
+        corners = [0, 2, 6, 8]
+        random.shuffle(corners)
+        for i in corners:
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                return
+
+        edges = [1, 3, 5, 7]
+        random.shuffle(edges)
+        for i in edges:
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                return
+           
+
+   
+   
+
+    def add_player_count(self):
+        filename = 'player_count.json'
+   
+        with open(filename, 'r') as file:
+           
+            data = json.load(file)
+           
+   
+        if 'player_count' in data:
+            data['player_count'] += 1
+        else:
+            data['player_count'] = 1
+           
+        with open(filename, 'w') as file:
+            json.dump(data, file, indent=4)
+   
 
 
-        
-
-
-
-
-
-        
-        
-
-        
-
-
-    
+g = Game()
+g.run()

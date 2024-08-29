@@ -7,12 +7,12 @@ from LED_management import start_animation, win_animation, tie_animation
 GPIO.setmode(GPIO.BCM) 
 GPIO.setwarnings(False)
 
-button_pins = [27, 21, 20]
+button_pins = [27, 21, 20, 26, 12, 19]
 led_pins = [2, 3, 4, 7, 6, 5, 8, 9, 10]
 board = ["", "", "", "", "", "", "", "", ""]
 threads = []
 turn = 'X'
-stop_event = threading.Event()
+spelet_spelas = True
 
 for pin in button_pins:
     GPIO.setup(pin, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
@@ -37,7 +37,7 @@ def show_X(position):
     turn_on(led_pins[position])
 
 def show_O(position):
-    while not stop_event.is_set():
+    while spelet_spelas:
         if board[position] == "O":
             turn_on(led_pins[position])
             sleep(0.5)
@@ -75,8 +75,8 @@ def update_board():
 
 
 def check_buttons():
-    global board
-    while not stop_event.is_set():
+    global spelet_spelas
+    while spelet_spelas:
         for i in range(len(button_pins)):
             if GPIO.input(button_pins[i]) == GPIO.HIGH:
                 if board[i] == '':
@@ -85,13 +85,11 @@ def check_buttons():
                     if check_win():
                         win_animation()
                         reset_board()
-                        run()
-                        return
+                        spelet_spelas = False
                     elif '' not in board:
                         tie_animation()
                         reset_board()
-                        run()
-                        return
+                        spelet_spelas = False
                     switch_turn()
                     sleep(0.5)
 
@@ -111,17 +109,13 @@ def check_win():
     return False
             
 def run():
-    global stop_event
-    stop_event.clear()
-
+    global spelet_spelas
+    spelet_spelas = True
     start_animation()
     lägg_till_spelare()
     hämta_nuvarande_antal()
-
-    thread1 = threading.Thread(target=check_buttons)
-    thread1.start()
-    thread1.join()
-
-    stop_event.set()  
+    check_buttons()
+    run()
+    
     
 run()
