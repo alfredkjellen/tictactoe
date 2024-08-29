@@ -6,9 +6,6 @@ import json
 import random
 
 
-import keyboard
-
-
 class Game():
     button_pins = [20, 21, 27, 26,12,19]
     led_pins = [2, 3, 4, 7, 6, 5, 8, 9, 10]
@@ -49,27 +46,6 @@ class Game():
             sleep(0.1)
        
        
-    def check_buttons(self, test_with_terminal=False):
-        buttons = [1,2,3,4,5,6,7,8,9]
-        while True:
-            if test_with_terminal:
-               
-                for button in buttons:
-                    if keyboard.is_pressed(button):
-                        self.current_button = self.button_pins[button-1]
-                        print(f"Button {button} pressed.")
-                        while keyboard.is_pressed(button):
-                            pass
-            else:
-                for button in self.button_pins:
-                    if GPIO.input(button) == GPIO.HIGH:
-                        self.current_button = button
-                       
-                        while GPIO.input(button) == GPIO.HIGH:
-                            sleep(0.1)
-            sleep(0.1)
-
-
 
     def update_board(self):
 
