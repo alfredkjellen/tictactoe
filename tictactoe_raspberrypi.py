@@ -184,13 +184,43 @@ class Game():
        
        
 
-    def bot_move():
-        pass
-       
+    def bot_move(self):
 
-       
-   
-   
+        for i in range(9):
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                if self.check_win_or_draw():
+                    return
+                self.board[i] = ""
+
+        opponent = 'O' if self.current_player == 'X' else 'X'
+        for i in range(9):
+            if self.board[i] == "":
+                self.board[i] = opponent
+                if self.check_win_or_draw():
+                    self.board[i] = self.current_player
+                    return
+                self.board[i] = ""
+
+        if self.board[4] == "":
+            self.board[4] = self.current_player
+            return
+
+        corners = [0, 2, 6, 8]
+        random.shuffle(corners)
+        for i in corners:
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                return
+
+        edges = [1, 3, 5, 7]
+        random.shuffle(edges)
+        for i in edges:
+            if self.board[i] == "":
+                self.board[i] = self.current_player
+                return
+           
+
    
    
 
