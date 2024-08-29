@@ -88,8 +88,74 @@ def main_animation():
             
             reset()
             sleep(0.1)
+
+        def blink():
+            def bling(start, finnish):
+                for i in range(start, finnish, 2):
+                    if stop_animation:
+                        break
+                    turn_on(i)
+                sleep(0.1)
+                for i in range(start, finnish, 2):
+                    if stop_animation:
+                        break
+                    turn_off(i)
+
+            for i in range(4):
+                if stop_animation:
+                        break
+                bling(2, 11)
+                bling(3, 10)    
+            sleep(0.1)
+
+        def clock():
+            def pointer(start, finnish, step):
+                 for i in range(start , finnish, step):
+                        if stop_animation:
+                                break
+                        turn_on(i)
+                        sleep(0.3)
+                        turn_off(i)
+
+            for i in range(2):
+                if stop_animation:
+                        break
+                pointer(2, 11, 4)
+                pointer(3, 10, 3)
+                pointer(4, 9, 2)
+                pointer(5, 8, 1)
+            sleep(0.1)
+
+                
+        def tic_tac_toe():
+            T = [6, 9, 2, 3, 4]
+            I = [3, 6, 9]
+            C = [4, 3, 2, 5, 8, 9, 10]
+            A = [3, 5, 8, 7, 10, 6]
+            O = [4, 3, 2, 5, 8, 9, 10, 7]
+            E = [2, 5, 8, 9, 10, 6, 7, 3, 4]
+
+            def letter(letter):
+                for LED in letter:
+                    if stop_animation:
+                            break
+                    turn_on(LED)
+                    sleep(0.1)
+                sleep(0.3)
+                reset()
+                sleep(0.1)    
+                
+            letter(T)
+            letter(I)
+            letter(C)
+            letter(T)
+            letter(A)
+            letter(C)
+            letter(T)
+            letter(O)
+            letter(E)
             
-        animations = [explosion, glitter, snake, roulette]
+        animations = [explosion, roulette, glitter, snake, blink, clock, tic_tac_toe]
         
         for a in animations:
             a()
@@ -99,25 +165,23 @@ def win_animation():
     turn_off(6)
     
 def tie_animation():
-    turn_off(2)
+    for i in range(2,11):
+        turn_off(i)
+        sleep(0.1)
+    sleep(0.1)
+            
 
 
 def monitor_stop_button():
     global stop_animation
-    while True:
-        if GPIO.input(stop_button_pin) == GPIO.HIGH:
-            stop_animation = True
-            break
-        sleep(0.2)
+    while  stop_animation:
+        for i in stop_button_pin:
+            if GPIO.input(i) == GPIO.HIGH:
+                sleep(0.2)
+                stop_animation = True
 
 def start_animation():
-    try:
-        threading.Thread(target=monitor_stop_button).start()
-        main_animation()
-
-
-        while True:
-            sleep(0.1)
-
-    except KeyboardInterrupt:
-        GPIO.cleanup()
+    global stop_animation
+    threading.Thread(target=monitor_stop_button).start()
+    main_animation()
+    stop_animation = False
