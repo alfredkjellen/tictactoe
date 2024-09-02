@@ -48,7 +48,7 @@ class Game():
        
         thread_animation = threading.Thread(target=start_animation).start()
 
-        def start_game(func):
+        def start_game():
             end_animation()
             self.game_is_running = True
             thread_x = threading.Thread(target=self.show_X).start()
