@@ -4,7 +4,7 @@ from time import sleep
 from LED_management import start_animation, tie_animation, end_animation
 import json
 import random
-
+#testkommentar
 class Game():
     #GPIO pins
     BUTTON_PINS = [21, 20, 16, 12, 7, 8, 25, 24, 23]
