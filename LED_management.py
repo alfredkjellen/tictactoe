@@ -110,13 +110,15 @@ def main_animation():
 
         def clock():
             def pointer(start, finnish, step):
-                 for i in range(start , finnish, step):
+                for i in range(start , finnish, step):
                         if stop_animation:
                                 break
                         turn_on(i)
-                        sleep(0.3)
+                sleep(0.3)
+                for i in range(start , finnish, step):
+                        if stop_animation:
+                                break
                         turn_off(i)
-
             for i in range(2):
                 if stop_animation:
                         break
@@ -130,10 +132,10 @@ def main_animation():
         def tic_tac_toe():
             T = [6, 9, 2, 3, 4]
             I = [3, 6, 9]
-            C = [4, 3, 2, 5, 8, 9, 10]
-            A = [3, 5, 8, 7, 10, 6]
-            O = [4, 3, 2, 5, 8, 9, 10, 7]
-            E = [2, 5, 8, 9, 10, 6, 7, 3, 4]
+            C = [4, 3, 2, 7, 8, 9, 10]
+            A = [3, 7, 8, 5, 10, 6]
+            O = [4, 3, 2, 7, 8, 9, 10, 5]
+            E = [2, 7, 8, 9, 10, 6, 5, 3, 4]
 
             def letter(letter):
                 for LED in letter:
@@ -144,7 +146,7 @@ def main_animation():
                 sleep(0.3)
                 reset()
                 sleep(0.1)    
-                
+
             letter(T)
             letter(I)
             letter(C)
@@ -174,7 +176,7 @@ def tie_animation():
 
 def monitor_stop_button():
     global stop_animation
-    while  stop_animation:
+    while not stop_animation:
         for i in stop_button_pin:
             if GPIO.input(i) == GPIO.HIGH:
                 sleep(0.2)

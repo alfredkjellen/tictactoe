@@ -70,10 +70,7 @@ def update_board():
         thread.join()
     threads.clear()
 
-            
-        
-
-
+              
 def check_buttons():
     global spelet_spelas
     while spelet_spelas:
