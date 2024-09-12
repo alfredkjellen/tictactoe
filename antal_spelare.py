@@ -1,1 +1,0 @@
-antal_spelare = 0
